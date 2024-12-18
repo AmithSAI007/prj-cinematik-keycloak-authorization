@@ -1,0 +1,15 @@
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+#  - keycloak-secrets.yaml
+resources:
+- keycloak-service-account.yaml
+- keycloak-service.yaml
+- keycloak-statefulset.yaml
+
+# Specify any common labels
+labels:
+- includeSelectors: true
+  pairs:
+    app: keycloak
