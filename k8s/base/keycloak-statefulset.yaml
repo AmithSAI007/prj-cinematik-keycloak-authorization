@@ -31,8 +31,23 @@ spec:
               name: https
             - name: jgroups
               containerPort: 7600
-            - name: http
+            - name: health
               containerPort: 9000
+          readinessProbe:
+            httpGet:
+              path: /auth/health/ready
+              port: 9000
+              scheme: HTTPS
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /auth/health/live
+              port: 9000
+              scheme: HTTPS
+            initialDelaySeconds: 60
+            periodSeconds: 30
+
           securityContext:
             runAsUser: 1000
             allowPrivilegeEscalation: false
@@ -151,20 +166,6 @@ spec:
             limits:
               memory: "4Gi"
               cpu: "2000m"
-          readinessProbe:
-            httpGet:
-              path: /auth/health/ready
-              port: 9000
-              scheme: HTTPS
-            initialDelaySeconds: 60
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /auth/health/live
-              port: 9000
-              scheme: HTTPS
-            initialDelaySeconds: 60
-            periodSeconds: 30
       volumes:
         - name: keycloak-tls-volume
           secret:

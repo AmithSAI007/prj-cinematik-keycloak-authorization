@@ -4,6 +4,8 @@ metadata:
   name: keycloak-service
   labels:
     app: keycloak
+  annotations:
+    cloud.google.com/backend-config: '{"default": "keycloak-backendconfig"}'
 spec:
   ports:
   - name: http
@@ -20,4 +22,4 @@ spec:
     targetPort: 9000
   selector:
     app: keycloak
-  type: LoadBalancer
+  type: NodePort

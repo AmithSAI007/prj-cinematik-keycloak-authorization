@@ -6,12 +6,12 @@ metadata:
   namespace: default
   annotations:
     kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.allow-http: "false"
 spec:
   rules:
-    - host: houseofllm.com  # Your domain
-      http:
+    - http:
         paths:
-          - path: /auth  # Path for the readiness probe
+          - path: /  # Path for the readiness probe
             pathType: Prefix
             backend:
               service:
@@ -19,6 +19,4 @@ spec:
                 port:
                   name: https 
   tls:
-    - hosts:
-        - houseofllm.com
-      secretName: keycloak-tls  # Secret containing the TLS certificate
+    - secretName: keycloak-tls  # Secret containing the TLS certificate
