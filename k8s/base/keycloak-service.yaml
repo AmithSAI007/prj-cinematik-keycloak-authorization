@@ -22,4 +22,4 @@ spec:
     targetPort: 9000
   selector:
     app: keycloak
-  type: NodePort
+  type: ClusterIP
