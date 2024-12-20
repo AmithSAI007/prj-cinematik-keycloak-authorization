@@ -11,12 +11,14 @@ spec:
   rules:
     - http:
         paths:
-          - path: /  # Path for the readiness probe
-            pathType: Prefix
+          - path: /auth/* # Path for the readiness probe
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: keycloak-service
                 port:
-                  name: https 
+                  name: http 
   tls:
-    - secretName: keycloak-tls  # Secret containing the TLS certificate
+    - hosts:
+      - houseofllm.com
+      secretName: keycloak-tls  # Secret containing the TLS certificate

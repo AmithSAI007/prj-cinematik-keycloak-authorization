@@ -10,9 +10,12 @@ data:
   KC_PROXY: edge
   JGROUPS_DNS_QUERY: keycloak
   PROXY_ADDRESS_FORWARDING: "true"
+  KC_PROXY_PROTOCOL_ENABLED: "true"
   KC_METRICS_ENABLED: "true"
-  KC_HTTP_ENABLED: "false"
+  KC_HTTP_ENABLED: "true"
   KC_HTTP_RELATIVE_PATH: /auth
   KC_HOSTNAME_URL: https://houseofllm.com/auth
   JAVA_OPTS_APPEND: "-XX:+UseG1GC -XX:MaxRAMPercentage=80.0"
   KC_LOG_LEVEL: INFO
+  KC_HOSTNAME_STRICT_HTTPS: "true"
+  KC_PROXY_HEADERS: xforwarded
