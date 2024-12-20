@@ -78,11 +78,6 @@ spec:
                 configMapKeyRef:
                   name: keycloak-configmap
                   key: KC_PROXY_HEADERS
-            - name: KC_PROXY_PROTOCOL_ENABLED
-              valueFrom:
-                secretKeyRef:
-                  name: keycloak-configmap
-                  key: KC_PROXY_PROTOCOL_ENABLED
             - name: KC_HOSTNAME_STRICT_HTTPS
               valueFrom:
                 configMapKeyRef:
