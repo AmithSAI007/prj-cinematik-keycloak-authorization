@@ -1,4 +1,1 @@
-certs/
-k8s/base/keycloak-configmap.yaml
-k8s/base/keycloak-secrets.yaml
-
+manifests/config/keycloak-secrets.yaml
