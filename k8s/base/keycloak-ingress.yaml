@@ -1,0 +1,25 @@
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: keycloak-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/backend-protocol: "https"
+    kubernetes.io/ingress.allow-http: "false"
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /auth/* # Path for the readiness probe
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: keycloak-service
+                port:
+                  name: http 
+  tls:
+    - hosts:
+      - houseofllm.com
+      secretName: keycloak-tls  # Secret containing the TLS certificate
