@@ -4,9 +4,11 @@ kind: Kustomization
 
 #  - keycloak-secrets.yaml
 resources:
-- keycloak-service-account.yaml
-- keycloak-service.yaml
-- keycloak-statefulset.yaml
+  - keycloak-statefulset.yaml
+  - keycloak-backend.yaml
+  - keycloak-service-account.yaml
+  - keycloak-service.yaml
+  - keycloak-ingress.yaml
 
 # Specify any common labels
 labels:
