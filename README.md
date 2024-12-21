@@ -62,7 +62,8 @@ Keycloak can be accessed securely over HTTPS using a TLS certificate. Create the
 To deploy keycloak apply the kubernetes resources:
 
 ```bash
-    kubectl apply -k k8s/overlays/production
+    cd helm
+    helm install keycloak ./keycloak-chart
 ```
 
 **5. Verify Deployment**

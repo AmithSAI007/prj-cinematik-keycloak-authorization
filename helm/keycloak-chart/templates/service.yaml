@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-service
+  labels:
+    app: {{ .Chart.Name }}
+  annotations:
+    cloud.google.com/backend-config: '{"default": "keycloak-backendconfig"}' 
+spec:
+  ports:
+    - name: http
+      port: {{ .Values.service.ports.http }}
+      targetPort: {{ .Values.service.ports.http }}
+    - name: https
+      port: 443
+      targetPort: {{ .Values.service.ports.https }}
+    - name: jgroup
+      port: {{ .Values.service.ports.jgroups }}
+      targetPort: {{ .Values.service.ports.jgroups }}
+    - name: health
+      port: {{ .Values.service.ports.health }}
+      targetPort: {{ .Values.service.ports.health }}
+  selector:
+    app: {{ .Chart.Name }}
+  type: {{ .Values.service.type }}
+
+
