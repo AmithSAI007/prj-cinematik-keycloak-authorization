@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  serviceName: "{{ .Release.Name }}-service"
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          args: ["start"] 
+          ports:
+            - containerPort: {{ .Values.service.ports.http }}
+              name: http
+            - containerPort: {{ .Values.service.ports.https }}
+              name: https
+            - name: jgroups
+              containerPort: {{ .Values.service.ports.jgroups }}
+            - name: health
+              containerPort: {{ .Values.service.ports.health }}
+          readinessProbe:
+            httpGet:
+              path: /auth/health/ready
+              port: {{ .Values.service.ports.health }}
+              scheme: HTTPS
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /auth/health/live
+              port: {{ .Values.service.ports.health }}
+              scheme: HTTPS
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          securityContext:
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: keycloak-tls-volume
+              mountPath: /etc/x509/https
+              readOnly: true
+          env:
+            {{- range .Values.env }}
+            - name: {{ .name }}
+              valueFrom:
+                {{- if .valueFromSecret }}
+                secretKeyRef:
+                  name: {{ .valueFromSecret }}
+                  key: {{ .key }}
+                {{- else if .valueFromConfigMap }}
+                configMapKeyRef:
+                  name: {{ .valueFromConfigMap }}
+                  key: {{ .key }}
+                {{- end }}
+            {{- end }}
+          resources:
+            requests:
+              memory: "{{ .Values.resources.requests.memory }}"
+              cpu: "{{ .Values.resources.requests.cpu }}"
+            limits:
+              memory: "{{ .Values.resources.limits.memory }}"
+              cpu: "{{ .Values.resources.limits.cpu }}"
+      volumes:
+        - name: keycloak-tls-volume
+          secret:
+            secretName: keycloak-tls
+      tolerations:
+        - key: "keycloak"
+          operator: "Exists"
+          effect: "NoSchedule"
+
+ 
+ 
+ 
