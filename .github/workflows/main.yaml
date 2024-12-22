@@ -1,0 +1,50 @@
+name: CI-CD
+on:
+  push: 
+    branches: ["main", "develop", "releases/**"]
+    paths: ["helm/**", ".github/workflows/**"]
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: ["main", "develop", "releases/**"]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+env:
+  HELM_VERSION: v3.16.4 
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Helm Charts
+    runs-on: ubuntu-latest
+    steps:
+      
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4.2.0
+        with:
+          version: ${{ env.HELM_VERSION }}
+      
+      - name: Lint Helm Chart
+        run: |
+          cd helm
+          helm lint ./keycloak-chart
+
+      - name: Validate Helm Values
+        run: |
+          cd helm
+          helm template ./keycloak-chart --debug
