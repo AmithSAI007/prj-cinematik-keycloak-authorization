@@ -38,7 +38,12 @@ jobs:
         uses: azure/setup-helm@v4.2.0
         with:
           version: ${{ env.HELM_VERSION }}
-      
+     
+      - name: List Helm Directory
+        run: |
+          echo "Listing contents of helm directory:"
+          ls -al helm
+
       - name: Lint Helm Chart
         run: |
           cd helm
