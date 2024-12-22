@@ -38,11 +38,6 @@ jobs:
         uses: azure/setup-helm@v4.2.0
         with:
           version: ${{ env.HELM_VERSION }}
-     
-      - name: List Helm Directory
-        run: |
-          echo "Listing contents of helm directory:"
-          ls -al helm
 
       - name: Lint Helm Chart
         run: |
@@ -53,3 +48,26 @@ jobs:
         run: |
           cd helm
           helm template ./keycloak-chart --debug
+  
+  security_scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: 'config'
+          hide-progress: false
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy Scan Results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
