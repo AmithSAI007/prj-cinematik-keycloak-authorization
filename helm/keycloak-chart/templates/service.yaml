@@ -5,7 +5,7 @@ metadata:
   labels:
     app: {{ .Chart.Name }}
   annotations:
-    cloud.google.com/backend-config: '{"default": "keycloak-backendconfig"}' 
+    cloud.google.com/backend-config: '{"default": "{{ .Release.Name }}-backendconfig"}' 
 spec:
   ports:
     - name: http
