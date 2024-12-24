@@ -132,7 +132,10 @@ jobs:
 
       - name: Verify Deployment
         run: |
-          kubectl rollout status deployment/keycloak --timeout=5m
+
+          RELEASE_NAME="keycloak-${{ github.event.inputs.environment || 'development' }}"
+          
+          kubectl rollout status ${RELEASE_NAME}  --timeout=5m
           
           # Check if pods are running
           READY_PODS=$(kubectl get pods  -l app=keycloak -o jsonpath='{.items[*].status.containerStatuses[*].ready}' | tr ' ' '\n' | grep true | wc -l)
