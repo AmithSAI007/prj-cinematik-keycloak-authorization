@@ -151,4 +151,26 @@ jobs:
           
           # Wait for service to be ready
           kubectl wait --for=condition=ready pod -l app=keycloak-chart  --timeout=5m
-          
+  
+  notify:
+    name: Notify
+    needs: deploy_to_gke
+    runs-on: ubuntu-24.04
+    if: always()
+    steps:
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          fields: workflow,job,commit,repo,ref,author,took
+          custom_payload: |
+            {
+              attachments: [{
+                color: '${{ job.status }}' === 'success' ? 'good' : '${{ job.status }}' === 'failure' ? 'danger' : 'warning',
+                text: `Action Name: ${process.env.AS_WORKFLOW}\n Repository Name:${process.env.AS_REPO}@${process.env.AS_REF} by ${process.env.AS_AUTHOR} ${{ job.status }} in ${process.env.AS_TOOK}`,
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always()
+
