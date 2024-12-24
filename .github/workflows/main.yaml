@@ -125,6 +125,8 @@ jobs:
             exit 1
           fi
 
+          cd helm
+
           # Perform Helm deployment with proper values file and timeout
           helm upgrade --install ${RELEASE_NAME} ./keycloak-chart \
             --values "$VALUES_FILE" \
