@@ -95,6 +95,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           version: '>= 363.0.0'
+          install_components: 'gke-gcloud-auth-plugin'
 
       - name: Setup Helm
         uses: azure/setup-helm@v3
