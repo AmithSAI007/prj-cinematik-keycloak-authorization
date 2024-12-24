@@ -153,7 +153,7 @@ jobs:
           kubectl wait --for=condition=ready pod -l app=keycloak-chart  --timeout=5m
           
           # Get service URL
-          SERVICE_IP=$(kubectl get svc ${RELEASE_NAME}-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          SERVICE_IP=$(kubectl get ingress ${RELEASE_NAME}-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
           
           # Check health endpoint
           curl -sSf http://${SERVICE_IP}:9000/auth/health/ready || exit 1
