@@ -114,15 +114,13 @@ jobs:
           RELEASE_NAME="keycloak-${{ github.event.inputs.environment || 'development' }}"
           
           # Set environment-specific values file path
-          VALUES_FILE="./environments/${{ github.event.inputs.environment || 'development' }}/values-${{ github.event.inputs.environment || 'development' }}.yaml"
+          VALUES_FILE="../environments/${{ github.event.inputs.environment || 'development' }}/values-${{ github.event.inputs.environment || 'development' }}.yaml"
           
           # Verify values file exists
           if [ ! -f "$VALUES_FILE" ]; then
             echo "Error: Values file $VALUES_FILE not found!"
             exit 1
           fi
-         
-          cd helm 
 
           # Perform Helm deployment with proper values file and timeout
           helm upgrade --install ${RELEASE_NAME} ./keycloak-chart \
