@@ -135,10 +135,10 @@ jobs:
 
           RELEASE_NAME="keycloak-${{ github.event.inputs.environment || 'development' }}"
           
-          kubectl rollout status ${RELEASE_NAME}  --timeout=5m
+          kubectl rollout status deployment/${RELEASE_NAME}  --timeout=5m
           
           # Check if pods are running
-          READY_PODS=$(kubectl get pods  -l app=keycloak -o jsonpath='{.items[*].status.containerStatuses[*].ready}' | tr ' ' '\n' | grep true | wc -l)
+          READY_PODS=$(kubectl get pods  -l app=keycloak-chart -o jsonpath='{.items[*].status.containerStatuses[*].ready}' | tr ' ' '\n' | grep true | wc -l)
           if [ "$READY_PODS" -eq 0 ]; then
             echo "No Keycloak pods are ready!"
             exit 1
@@ -146,11 +146,14 @@ jobs:
 
       - name: Run Health Check
         run: |
+
+          RELEASE_NAME="keycloak-${{ github.event.inputs.environment || 'development' }}"
+          
           # Wait for service to be ready
-          kubectl wait --for=condition=ready pod -l app=keycloak  --timeout=5m
+          kubectl wait --for=condition=ready pod -l app=keycloak-chart  --timeout=5m
           
           # Get service URL
-          SERVICE_IP=$(kubectl get svc keycloak -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          SERVICE_IP=$(kubectl get svc ${RELEASE_NAME}-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
           
           # Check health endpoint
           curl -sSf http://${SERVICE_IP}:9000/auth/health/ready || exit 1
