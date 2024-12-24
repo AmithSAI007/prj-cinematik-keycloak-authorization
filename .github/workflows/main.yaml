@@ -114,7 +114,7 @@ jobs:
           RELEASE_NAME="keycloak-${{ github.event.inputs.environment || 'development' }}"
           
           # List directory
-          ls environments
+          ls environments/development/
 
           # Set environment-specific values file path
           VALUES_FILE="./environments/${{ github.event.inputs.environment || 'development' }}/values-${{ github.event.inputs.environment || 'development' }}.yaml"
