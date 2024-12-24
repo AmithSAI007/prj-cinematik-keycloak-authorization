@@ -128,7 +128,6 @@ jobs:
             --timeout 10m \
             --atomic \
             --wait \
-            --set image.tag="${{ github.sha }}" \
             --set environment="${{ github.event.inputs.environment || 'development' }}"
 
       - name: Verify Deployment
@@ -151,4 +150,4 @@ jobs:
           SERVICE_IP=$(kubectl get svc keycloak -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
           
           # Check health endpoint
-          curl -sSf http://${SERVICE_IP}:8080/auth/health || exit 1
+          curl -sSf http://${SERVICE_IP}:9000/auth/health/ready || exit 1
