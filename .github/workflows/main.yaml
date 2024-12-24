@@ -117,7 +117,7 @@ jobs:
           ls environments/development/
 
           # Set environment-specific values file path
-          VALUES_FILE="./environments/${{ github.event.inputs.environment || 'development' }}/values-${{ github.event.inputs.environment || 'development' }}.yaml"
+          VALUES_FILE="../environments/${{ github.event.inputs.environment || 'development' }}/values-${{ github.event.inputs.environment || 'development' }}.yaml"
           
           # Verify values file exists
           if [ ! -f "$VALUES_FILE" ]; then
