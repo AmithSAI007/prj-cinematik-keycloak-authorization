@@ -43,13 +43,13 @@ jobs:
         run: |
           cd helm
           helm lint ./keycloak-chart -f \
-          ./environments/${{ github.event.inputs.environment || 'development' }}/values-${{ github.events.inputs.environment || 'development' }}
+          ./environments/${{ github.event.inputs.environment || 'development' }}/values-${{ github.events.inputs.environment || 'development' }}.yaml
 
       - name: Validate Helm Values
         run: |
           cd helm
           helm template ./keycloak-chart \
-          -f ./environments/${{ github.event.inputs.environment || 'development' }}/values-${{ github.events.inputs.environment || 'development' }} \
+          -f ./environments/${{ github.event.inputs.environment || 'development' }}/values-${{ github.events.inputs.environment || 'development' }}.yaml \
           --debug
   
   security_scan:
