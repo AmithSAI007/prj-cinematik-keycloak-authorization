@@ -165,11 +165,11 @@ jobs:
           fields: workflow,job,commit,repo,ref,author,took
           custom_payload: |
             {
-              attachments: [{
-                color: '${{ job.status }}' === 'success' ? 'good' : '${{ job.status }}' === 'failure' ? 'danger' : 'warning',
-                text: `Action Name: ${process.env.AS_WORKFLOW}\n Repository Name:${process.env.AS_REPO}@${process.env.AS_REF} by ${process.env.AS_AUTHOR} ${{ job.status }} in ${process.env.AS_TOOK}`,
+              "attachments": [{
+                "color": "${{ job.status }}" == "success" ? "good" : "${{ job.status }}" == "failure" ? "danger" : "warning",
+                "text": "Action Name: ${{ github.workflow }}\nRepository Name: ${{ github.repository }}@${{ github.ref }} by ${{ github.actor }} ${{ job.status }} in ${{ job.status == 'success' && 'completed' || 'failed' }}",
               }]
-            }
+            }      
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
