@@ -1,0 +1,176 @@
+name: CI-CD
+on:
+  push: 
+    branches: ["main", "develop", "releases/**"]
+    paths: ["helm/**", ".github/workflows/**"]
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: ["main", "develop", "releases/**"]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+env:
+  HELM_VERSION: v3.16.4 
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Helm Charts
+    runs-on: ubuntu-24.04
+    steps:
+      
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4.2.0
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Lint Helm Chart
+        run: |
+          cd helm
+          helm lint ./keycloak-chart -f \
+          ../environments/${{ github.event.inputs.environment || 'development' }}/values-${{ github.events.inputs.environment || 'development' }}.yaml
+
+      - name: Validate Helm Values
+        run: |
+          cd helm
+          helm template ./keycloak-chart \
+          -f ../environments/${{ github.event.inputs.environment || 'development' }}/values-${{ github.events.inputs.environment || 'development' }}.yaml \
+          --debug
+  
+  security_scan:
+    name: Security Scan
+    runs-on: ubuntu-24.04
+    needs: validate
+    steps:
+      
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: 'config'
+          hide-progress: false
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy Scan Results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  deploy_to_gke:
+    name: Deploy to GKE
+    needs: [validate, security_scan]
+    runs-on: ubuntu-24.04
+    environment: ${{ github.events.input.environment || 'development' }}
+    steps:
+      
+      - name: Git Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate with GCP
+        uses: google-github-actions/auth@v2
+        with: 
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: '>= 363.0.0'
+          install_components: 'gke-gcloud-auth-plugin'
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: ${{ env.HELM_VERSION }}
+      
+      - name: Configure kubectl
+        run: |
+          gcloud container clusters get-credentials ${{ secrets.GCP_GKE_CLUSTER_NAME }} \
+            --region ${{ secrets.GCP_PROJECT_REGION }} \
+            --project ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Deploy to GKE
+        run: |
+          # Generate a release name based on environment
+          RELEASE_NAME="keycloak-${{ github.event.inputs.environment || 'development' }}"
+
+          # Set environment-specific values file path
+          VALUES_FILE="./environments/${{ github.event.inputs.environment || 'development' }}/values-${{ github.event.inputs.environment || 'development' }}.yaml"
+          
+          # Verify values file exists
+          if [ ! -f "$VALUES_FILE" ]; then
+            echo "Error: Values file $VALUES_FILE not found!"
+            exit 1
+          fi
+
+          # Perform Helm deployment with proper values file and timeout
+          helm upgrade --install ${RELEASE_NAME} ./helm/keycloak-chart \
+            --values "$VALUES_FILE" \
+            --timeout 10m \
+            --atomic \
+            --wait \
+            --set environment="${{ github.event.inputs.environment || 'development' }}"
+
+      - name: Verify Deployment
+        run: |
+
+          RELEASE_NAME="keycloak-${{ github.event.inputs.environment || 'development' }}"
+          
+          kubectl rollout status statefulset/${RELEASE_NAME}  --timeout=5m
+          
+          # Check if pods are running
+          READY_PODS=$(kubectl get pods  -l app=keycloak-chart -o jsonpath='{.items[*].status.containerStatuses[*].ready}' | tr ' ' '\n' | grep true | wc -l)
+          if [ "$READY_PODS" -eq 0 ]; then
+            echo "No Keycloak pods are ready!"
+            exit 1
+          fi
+
+      - name: Run Health Check
+        run: |
+
+          RELEASE_NAME="keycloak-${{ github.event.inputs.environment || 'development' }}"
+          
+          # Wait for service to be ready
+          kubectl wait --for=condition=ready pod -l app=keycloak-chart  --timeout=5m
+  
+  notify:
+    name: Notify
+    needs: deploy_to_gke
+    runs-on: ubuntu-24.04
+    if: always()
+    steps:
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          fields: workflow,job,commit,repo,ref,author,took
+          custom_payload: |
+            {
+              "attachments": [{
+                "color": "${{ job.status }}" == "success" ? "good" : "${{ job.status }}" == "failure" ? "danger" : "warning",
+                "text": "Action Name: ${{ github.workflow }}\nRepository Name: ${{ github.repository }}@${{ github.ref }} by ${{ github.actor }} ${{ job.status }} in ${{ job.status == 'success' && 'completed' || 'failed' }}",
+              }]
+            }      
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always()
+

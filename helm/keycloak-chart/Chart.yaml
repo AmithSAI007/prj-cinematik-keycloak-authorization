@@ -1,0 +1,6 @@
+apiVersion: v2
+name: keycloak-chart
+description: A Helm chart for Keycloak
+type: application
+version: 0.1.0
+appVersion: 21.0.0 # Use the version of Keycloak you are deploying

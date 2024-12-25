@@ -1,0 +1,14 @@
+
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: {{ .Release.Name }}-backendconfig
+spec:
+  healthCheck:
+    checkIntervalSec: 10
+    timeoutSec: 5
+    healthyThreshold: 2
+    unhealthyThreshold: 3
+    type: HTTPS
+    requestPath: /auth/health/ready
+    port: {{ .Values.service.ports.health }}
