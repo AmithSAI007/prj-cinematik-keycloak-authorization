@@ -22,7 +22,7 @@ spec:
         fsGroup: 10001
       initContainers:
         - name: init-keycloak
-          image: quay.io/keycloak/keycloak:latest
+          image: quay.io/keycloak/keycloak:26.0
           command: ["/bin/bash", "-c"]
           args:
             - |
@@ -38,7 +38,7 @@ spec:
               mountPath: /opt/keycloak-data
       containers:
         - name: keycloak
-          image: quay.io/keycloak/keycloak:latest
+          image: quay.io/keycloak/keycloak:26.0
           args: ["start", "--verbose"]
           ports:
             - containerPort: 8080
