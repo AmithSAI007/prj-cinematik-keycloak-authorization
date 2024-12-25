@@ -18,7 +18,7 @@ spec:
     spec:
       serviceAccountName: {{ .Values.serviceAccount.name }}
       securityContext:
-        fsGroup: 1000
+        fsGroup: 10001
       initContainers:
         - name: init-keycloak
           image: quay.io/keycloak/keycloak:latest
