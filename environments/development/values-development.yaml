@@ -96,10 +96,10 @@ env:
     valueFromConfigMap: keycloak-configmap
     key: KC_HTTP_RELATIVE_PATH
   - name: KC_HOSTNAME_URL
-    valueFromSecret: keycloak-secrets
+    valueFromConfigMap: keycloak-configmap
     key: KC_HOSTNAME_URL
   - name: KC_HOSTNAME_ADMIN_URL
-    valueFromSecret: keycloak-secrets
+    valueFromConfigMap: keycloak-configmap
     key: KC_HOSTNAME_URL
   - name: JAVA_OPTS_APPEND
     valueFromConfigMap: keycloak-configmap

@@ -21,7 +21,7 @@ spec:
         fsGroup: 10001
       initContainers:
         - name: init-keycloak
-          image: quay.io/keycloak/keycloak:latest
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           command: ["/bin/bash", "-c"]
           args:
             - |
@@ -30,8 +30,8 @@ spec:
               # Set proper ownership
               chown -R 10001:10001 /opt/keycloak-data
           securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
+            runAsUser: 0
+            runAsGroup: 0
           volumeMounts:
             - name: keycloak-dir
               mountPath: /opt/keycloak-data
@@ -76,7 +76,7 @@ spec:
               mountPath: /etc/x509/https
               readOnly: true
             - name: keycloak-dir
-              mountPath: /opt/keycloal
+              mountPath: /opt/keycloak
             - name: keycloak-temp-volume
               mountPath: /tmp
           env:

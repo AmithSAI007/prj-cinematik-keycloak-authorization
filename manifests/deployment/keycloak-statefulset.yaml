@@ -19,7 +19,7 @@ spec:
     spec:
       serviceAccountName: keycloak-sa
       securityContext:
-        fsGroup: 1000
+        fsGroup: 10001
       initContainers:
         - name: init-keycloak
           image: quay.io/keycloak/keycloak:latest
@@ -51,16 +51,16 @@ spec:
               containerPort: 9000
           readinessProbe:
             httpGet:
-              path: /health/ready
+              path: /auth/health/ready
               port: 9000
-              scheme: HTTP
+              scheme: HTTPS
             initialDelaySeconds: 60
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /health/live
+              path: /auth/health/live
               port: 9000
-              scheme: HTTP
+              scheme: HTTPS
             initialDelaySeconds: 60
             periodSeconds: 30
           securityContext:
@@ -173,13 +173,13 @@ spec:
                   key: KC_HTTP_RELATIVE_PATH
             - name: KC_HOSTNAME_URL
               valueFrom:
-                secretKeyRef:
-                  name: keycloak-secrets
+                configMapKeyRef:
+                  name: keycloak-configmap
                   key: KC_HOSTNAME_URL
             - name: KC_HOSTNAME_ADMIN_URL
               valueFrom:
-               secretKeyRef:
-                  name: keycloak-secrets
+               configMapKeyRef:
+                  name: keycloak-configmap
                   key: KC_HOSTNAME_URL
             - name: JAVA_OPTS_APPEND
               valueFrom:
