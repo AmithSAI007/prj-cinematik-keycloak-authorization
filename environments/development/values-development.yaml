@@ -3,7 +3,7 @@ replicaCount: 1
 
 image:
   repository: quay.io/keycloak/keycloak
-  tag: 26.0
+  tag: "26.0"
   pullPolicy: IfNotPresent
 
 serviceAccount:
