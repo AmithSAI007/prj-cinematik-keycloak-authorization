@@ -49,7 +49,7 @@ spec:
           securityContext:
             seccompProfile:
               type: RuntimeDefault
-            readOnlyRootFilesystem: true
+            readOnlyRootFilesystem: false
             runAsUser: 10001
             allowPrivilegeEscalation: false
             capabilities:
@@ -59,6 +59,12 @@ spec:
             - name: keycloak-tls-volume
               mountPath: /etc/x509/https
               readOnly: true
+            - name: keycloak-logs-volume
+              mountPath: /opt/keycloak/logs
+              readOnly: false  # Writable directory for logs
+            - name: keycloak-temp-volume
+              mountPath: /tmp
+              readOnly: false 
           env:
             {{- range .Values.env }}
             - name: {{ .name }}
