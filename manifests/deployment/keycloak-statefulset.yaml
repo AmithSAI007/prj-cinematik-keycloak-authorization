@@ -19,11 +19,35 @@ spec:
     spec:
       serviceAccountName: keycloak-sa
       securityContext:
-        fsGroup: 1000
+        fsGroup: 10001
+      initContainers:
+        - name: init-keycloak
+          image: quay.io/keycloak/keycloak:26.0
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              # Copy all contents from /opt/keycloak to the persistent volume
+              cp -R /opt/keycloak/* /opt/keycloak-data/
+              # Set proper ownership
+              chown -R 10001:10001 /opt/keycloak-data
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            readOnlyRootFilesystem: true
+            seccompProfile:
+              type: RuntimeDefault
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            
+          volumeMounts:
+            - name: keycloak-dir
+              mountPath: /opt/keycloak-data
       containers:
         - name: keycloak
-          image: quay.io/keycloak/keycloak:latest
-          args: ["start"] 
+          image: quay.io/keycloak/keycloak:26.0
+          args: ["start", "--verbose"]
           ports:
             - containerPort: 8080
               name: http
@@ -48,7 +72,10 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 30
           securityContext:
-            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+            readOnlyRootFilesystem: true
+            runAsUser: 10001
             allowPrivilegeEscalation: false
             capabilities:
               drop:
@@ -57,6 +84,10 @@ spec:
             - name: keycloak-tls-volume
               mountPath: /etc/x509/https
               readOnly: true
+            - name: keycloak-dir
+              mountPath: /opt/keycloak
+            - name: keycloak-temp-volume
+              mountPath: /tmp
           env:
             - name: KC_BOOTSTRAP_ADMIN_USERNAME
               valueFrom:
@@ -85,13 +116,13 @@ spec:
                   key: KC_HOSTNAME_STRICT_HTTPS
             - name: KC_DB_URL
               valueFrom:
-                configMapKeyRef:
-                  name: keycloak-configmap
+                secretKeyRef:
+                  name: keycloak-secrets
                   key: KC_DB_URL
             - name: KC_HOSTNAME
               valueFrom:
-                configMapKeyRef:
-                  name: keycloak-configmap
+                secretKeyRef:
+                  name: keycloak-secrets
                   key: KC_HOSTNAME
             - name: KC_HEALTH_ENABLED
               valueFrom:
@@ -155,7 +186,7 @@ spec:
                   key: KC_HOSTNAME_URL
             - name: KC_HOSTNAME_ADMIN_URL
               valueFrom:
-                configMapKeyRef:
+               configMapKeyRef:
                   name: keycloak-configmap
                   key: KC_HOSTNAME_URL
             - name: JAVA_OPTS_APPEND
@@ -165,8 +196,8 @@ spec:
                   key: JAVA_OPTS_APPEND
             - name: KC_LOG_LEVEL
               valueFrom:
-                configMapKeyRef:
-                  name: keycloak-configmap
+                secretKeyRef:
+                  name: keycloak-secrets
                   key: KC_LOG_LEVEL
           resources:
             requests:
@@ -179,6 +210,10 @@ spec:
         - name: keycloak-tls-volume
           secret:
             secretName: keycloak-tls
+        - name: keycloak-temp-volume
+          emptyDir: {}
+        - name: keycloak-dir
+          emptyDir: {}
       tolerations:
         - key: "keycloak"
           operator: "Exists"
