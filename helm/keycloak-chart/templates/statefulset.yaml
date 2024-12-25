@@ -25,13 +25,17 @@ spec:
           command: ["/bin/bash", "-c"]
           args:
             - |
-              # Copy all contents from /opt/keycloak to the persistent volume
               cp -R /opt/keycloak/* /opt/keycloak-data/
-              # Set proper ownership
-              chown -R 10001:10001 /opt/keycloak-data
+              chmod -R 775 /opt/keycloak-data
           securityContext:
-            runAsUser: 0
-            runAsGroup: 0
+            runAsUser: 10001
+            runAsGroup: 10001
+            seccompProfile:
+              type: RuntimeDefault
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           volumeMounts:
             - name: keycloak-dir
               mountPath: /opt/keycloak-data
@@ -112,7 +116,3 @@ spec:
         - key: "keycloak"
           operator: "Exists"
           effect: "NoSchedule"
-
- 
- 
- 
