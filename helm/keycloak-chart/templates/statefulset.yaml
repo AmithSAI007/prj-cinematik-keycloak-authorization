@@ -19,6 +19,22 @@ spec:
       serviceAccountName: {{ .Values.serviceAccount.name }}
       securityContext:
         fsGroup: 1000
+      initContainers:
+        - name: init-keycloak
+          image: quay.io/keycloak/keycloak:latest
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              # Copy all contents from /opt/keycloak to the persistent volume
+              cp -R /opt/keycloak/* /opt/keycloak-data/
+              # Set proper ownership
+              chown -R 10001:10001 /opt/keycloak-data
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          volumeMounts:
+            - name: keycloak-dir
+              mountPath: /opt/keycloak-data
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -50,7 +66,7 @@ spec:
             seccompProfile:
               type: RuntimeDefault
             readOnlyRootFilesystem: false
-            runAsUser: 10001
+            runAsUser: 1001
             allowPrivilegeEscalation: false
             capabilities:
               drop:
@@ -59,12 +75,10 @@ spec:
             - name: keycloak-tls-volume
               mountPath: /etc/x509/https
               readOnly: true
-            - name: keycloak-logs-volume
-              mountPath: /opt/keycloak/logs
-              readOnly: false  # Writable directory for logs
+            - name: keycloak-dir
+              mountPath: /opt/keycloal
             - name: keycloak-temp-volume
               mountPath: /tmp
-              readOnly: false 
           env:
             {{- range .Values.env }}
             - name: {{ .name }}
@@ -90,9 +104,9 @@ spec:
         - name: keycloak-tls-volume
           secret:
             secretName: keycloak-tls
-        - name: keycloak-logs-volume
-          emptyDir: {}
         - name: keycloak-temp-volume
+          emptyDir: {}
+        - name: keycloak-dir
           emptyDir: {}
       tolerations:
         - key: "keycloak"

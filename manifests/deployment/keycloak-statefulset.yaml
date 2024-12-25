@@ -20,10 +20,26 @@ spec:
       serviceAccountName: keycloak-sa
       securityContext:
         fsGroup: 1000
+      initContainers:
+        - name: init-keycloak
+          image: quay.io/keycloak/keycloak:latest
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              # Copy all contents from /opt/keycloak to the persistent volume
+              cp -R /opt/keycloak/* /opt/keycloak-data/
+              # Set proper ownership
+              chown -R 10001:10001 /opt/keycloak-data
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          volumeMounts:
+            - name: keycloak-dir
+              mountPath: /opt/keycloak-data
       containers:
         - name: keycloak
           image: quay.io/keycloak/keycloak:latest
-          args: ["start"] 
+          args: ["start", "--verbose"]
           ports:
             - containerPort: 8080
               name: http
@@ -35,22 +51,22 @@ spec:
               containerPort: 9000
           readinessProbe:
             httpGet:
-              path: /auth/health/ready
+              path: /health/ready
               port: 9000
-              scheme: HTTPS
+              scheme: HTTP
             initialDelaySeconds: 60
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /auth/health/live
+              path: /health/live
               port: 9000
-              scheme: HTTPS
+              scheme: HTTP
             initialDelaySeconds: 60
             periodSeconds: 30
           securityContext:
             seccompProfile:
               type: RuntimeDefault
-            readOnlyRootFilesystem: false
+            readOnlyRootFilesystem: true
             runAsUser: 10001
             allowPrivilegeEscalation: false
             capabilities:
@@ -60,13 +76,10 @@ spec:
             - name: keycloak-tls-volume
               mountPath: /etc/x509/https
               readOnly: true
-            - name: keycloak-logs-volume
-              mountPath: /opt/keycloak/logs
-              readOnly: false  # Writable directory for logs
+            - name: keycloak-dir
+              mountPath: /opt/keycloak
             - name: keycloak-temp-volume
               mountPath: /tmp
-              readOnly: false 
-
           env:
             - name: KC_BOOTSTRAP_ADMIN_USERNAME
               valueFrom:
@@ -189,11 +202,10 @@ spec:
         - name: keycloak-tls-volume
           secret:
             secretName: keycloak-tls
-        - name: keycloak-logs-volume
-          emptyDir: {}
         - name: keycloak-temp-volume
           emptyDir: {}
-
+        - name: keycloak-dir
+          emptyDir: {}
       tolerations:
         - key: "keycloak"
           operator: "Exists"
