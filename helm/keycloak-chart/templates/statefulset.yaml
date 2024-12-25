@@ -90,6 +90,10 @@ spec:
         - name: keycloak-tls-volume
           secret:
             secretName: keycloak-tls
+        - name: keycloak-logs-volume
+          emptyDir: {}
+        - name: keycloak-temp-volume
+          emptyDir: {}
       tolerations:
         - key: "keycloak"
           operator: "Exists"

@@ -48,7 +48,10 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 30
           securityContext:
-            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+            readOnlyRootFilesystem: false
+            runAsUser: 10001
             allowPrivilegeEscalation: false
             capabilities:
               drop:
@@ -57,6 +60,13 @@ spec:
             - name: keycloak-tls-volume
               mountPath: /etc/x509/https
               readOnly: true
+            - name: keycloak-logs-volume
+              mountPath: /opt/keycloak/logs
+              readOnly: false  # Writable directory for logs
+            - name: keycloak-temp-volume
+              mountPath: /tmp
+              readOnly: false 
+
           env:
             - name: KC_BOOTSTRAP_ADMIN_USERNAME
               valueFrom:
@@ -85,13 +95,13 @@ spec:
                   key: KC_HOSTNAME_STRICT_HTTPS
             - name: KC_DB_URL
               valueFrom:
-                configMapKeyRef:
-                  name: keycloak-configmap
+                secretKeyRef:
+                  name: keycloak-secrets
                   key: KC_DB_URL
             - name: KC_HOSTNAME
               valueFrom:
-                configMapKeyRef:
-                  name: keycloak-configmap
+                secretKeyRef:
+                  name: keycloak-secrets
                   key: KC_HOSTNAME
             - name: KC_HEALTH_ENABLED
               valueFrom:
@@ -150,13 +160,13 @@ spec:
                   key: KC_HTTP_RELATIVE_PATH
             - name: KC_HOSTNAME_URL
               valueFrom:
-                configMapKeyRef:
-                  name: keycloak-configmap
+                secretKeyRef:
+                  name: keycloak-secrets
                   key: KC_HOSTNAME_URL
             - name: KC_HOSTNAME_ADMIN_URL
               valueFrom:
-                configMapKeyRef:
-                  name: keycloak-configmap
+               secretKeyRef:
+                  name: keycloak-secrets
                   key: KC_HOSTNAME_URL
             - name: JAVA_OPTS_APPEND
               valueFrom:
@@ -165,8 +175,8 @@ spec:
                   key: JAVA_OPTS_APPEND
             - name: KC_LOG_LEVEL
               valueFrom:
-                configMapKeyRef:
-                  name: keycloak-configmap
+                secretKeyRef:
+                  name: keycloak-secrets
                   key: KC_LOG_LEVEL
           resources:
             requests:
@@ -179,6 +189,11 @@ spec:
         - name: keycloak-tls-volume
           secret:
             secretName: keycloak-tls
+        - name: keycloak-logs-volume
+          emptyDir: {}
+        - name: keycloak-temp-volume
+          emptyDir: {}
+
       tolerations:
         - key: "keycloak"
           operator: "Exists"
